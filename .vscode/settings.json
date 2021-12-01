@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "db_bank.h": "c",
+        "stdio.h": "c",
+        "stdlib.h": "c",
+        "string.h": "c",
+        "fungsi.h": "c"
+    }
+}

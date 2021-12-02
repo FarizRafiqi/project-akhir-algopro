@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+#include "lib_chalk.h"
+#include <ctype.h>
 
 char norek_tujuan[5];
 int pilihan;
@@ -12,34 +14,31 @@ nasabah nasabah_tujuan;
 int cariNasabahBerdasarkanNorek(char *in_norek);
 void formatNumber(int n);
 void readFile(char *filename);
+int inputTransferNominal(int *in_nominal);
 
 void welcome()
 {
-	// system("clear");
 	readFile("welcome.txt");
+	printf("TEKAN 'ENTER' PADA KEYBOARD JIKA SELESAI MEMASUKKAN PIN\n");
 }
 
-// void welcomeError()
-// {
-//     system("clear");
-//     printf("                          SELAMAT DATANG\n");
-//     printf("                                DI\n");
-//     printf("                           BANK BERSAMA\n\n");
-//     printf("                            PIN SALAH\n\n");
-//     printf("                      SILAHKAN MASUKKAN PIN");
-//     printf("\n\n\t\t\t      ");
-//     scanf("%d", &pin);
-// }
-
-void errorInput()
+void yesNoQuestion(char *text)
 {
-	system("clear");
-	printf("\n\n\n                   Maaf Pilihan Tidak Tersedia\n\n");
+	printf("\n%s\n", text);
+	printf("1. YA\n2. TIDAK\n");
+
+	printf("Masukkan pilihan Anda: ");
+	scanf("%d", &pilihan);
+	if (pilihan < 0 && pilihan > 2)
+	{
+		printf("Pilihan Menu Tidak Tersedia!");
+		yesNoQuestion(text);
+	}
 }
 
 int cekSaldo()
 {
-	system("clear");
+	system("cls");
 	printf("\n\n                              SISA SALDO ANDA\n\n");
 	// printf("\nRp %d", saldo);
 	printf("\n\n\n                APAKAH ANDA INGIN MELAKUKAN TRANSAKSI LAIN?\n\n");
@@ -65,7 +64,7 @@ int cekSaldo()
 // {
 //     int nominal;
 
-//     system("clear");
+//     system("cls");
 //     printf("\n\n                   MASUKKAN NOMINAL KELIPATAN RP 50000\n\n");
 //     printf("                           Rp ");
 //     scanf("%d", &nominal);
@@ -98,67 +97,90 @@ int cekSaldo()
 //     }
 //     return 0;
 
+/**
+ * @todo Belum dilakukan pengecekan apakah inputnya karakter atau angka 
+ */
+int inputTransferNominal(int *in_nominal)
+{
+	printf("\nMasukkan Nominal: ");
+	scanf("%d", in_nominal);
+	if (*in_nominal < 50000)
+	{
+		printf("Minimal Transfer Adalah Rp 50.000");
+		return inputTransferNominal(in_nominal);
+	}
+	else if (*in_nominal > 100000000)
+	{
+		printf("Maksimal Transfer per Hari Adalah Rp 100.000.000");
+		return inputTransferNominal(in_nominal);
+	}
+	return 1;
+}
+
 int transfer(nasabah loggin_user)
 {
-	setlocale(LC_NUMERIC, "");
 	printf("Masukkan No. Rekening Tujuan: ");
 	scanf("%s", norek_tujuan);
 
+	if (!strcmp(norek_tujuan, loggin_user.norek))
+	{
+		printf("No. Rekening Tujuan Harus Berbeda dengan No. Rekening Anda!\n");
+		transfer(loggin_user);
+	}
+
 	if (cariNasabahBerdasarkanNorek(norek_tujuan))
 	{
-		printf("\nMasukkan Nominal: ");
-		scanf("%d", &nominal);
-		if (nominal >= 50000)
+		system("cls");
+		inputTransferNominal(&nominal);
+
+		if (loggin_user.saldo < nominal)
 		{
-			if (nasabah_tujuan.saldo >= nominal)
-			{
-				system("clear");
-				printf("\nDari   : %s\n", loggin_user.nama);
-				printf("Tujuan : %s\n", nasabah_tujuan.nama);
-				printf("Jumlah : ");
-				formatNumber(nominal);
-				printf("\nBiaya Admin : ");
-				formatNumber(biaya_admin);
-
-				printf("\n\n1. Benar\n");
-				printf("2. Keluar\n");
-				printf("3. Kembali ke Menu\n");
-				printf("Masukkan Pilihan Anda: ");
-				scanf("%d", &pilihan);
-				system("clear");
-
-				switch (pilihan)
-				{
-				case 1:
-					loggin_user.saldo -= nominal;
-					nasabah_tujuan.saldo += nominal;
-					printf("Transaksi berhasil sisa saldo Anda: Rp. %d\n", loggin_user.saldo);
-
-					printf("Apakah Anda ingin melakukan Transaksi lain? \n");
-					printf("1. YA\n2. TIDAK");
-
-					printf("Masukkan Pilihan anda: ");
-					scanf("%d", &pilihan);
-					return pilihan == 1 ? 0 : 1;
-				case 2:
-					break;
-				case 3:
-					return 0;
-				default:
-					printf("Pilihan Menu Tidak Tersedia");
-					return 0;
-				}
-			}
-			else
-			{
-				printf("Saldo tidak mencukupi!");
-			}
+			printf(CHALK_BG_RED("Transaksi Gagal\n"));
+			printf(CHALK_BG_RED("Saldo Tidak Mencukupi!"));
+			yesNoQuestion("Transaksi lagi?");
+			return pilihan;
 		}
-		else
+
+		system("cls");
+
+		printf("\nDari\t\t: %s\n", loggin_user.nama);
+		printf("Tujuan\t\t: %s\n", nasabah_tujuan.nama);
+		printf("Jumlah\t\t: Rp ");
+		formatNumber(nominal);
+		printf("\nBiaya Admin\t: Rp ");
+		formatNumber(biaya_admin);
+
+		int total = nominal + biaya_admin;
+		printf("\nTotal\t\t: Rp ");
+		formatNumber(total);
+
+		printf("\n\n1. Benar\n");
+		printf("2. Keluar\n");
+		printf("3. Kembali ke Menu\n");
+		printf("Masukkan Pilihan Anda: ");
+		scanf("%d", &pilihan);
+
+		system("cls");
+
+		switch (pilihan)
 		{
-			printf("Minimal Transfer Adalah Rp. 50.000");
+		case 1:
+			loggin_user.saldo -= total;
+			nasabah_tujuan.saldo += nominal;
+			printf("Transaksi Berhasil Sisa Saldo Anda: Rp ");
+			formatNumber(loggin_user.saldo);
+			yesNoQuestion("Apakah Anda Ingin Melakukan Transaksi Lain?");
+			return pilihan;
+		case 2:
+			return 0;
+		case 3:
+			return 1;
+		default:
+			printf("Pilihan Menu Tidak Tersedia");
+			return 0;
 		}
 	}
+	transfer(loggin_user);
 }
 
 int cariNasabahBerdasarkanNorek(char *in_norek)
@@ -173,7 +195,7 @@ int cariNasabahBerdasarkanNorek(char *in_norek)
 				return 1;
 			}
 		}
-		printf("No. Rekening Tujuan Tidak Ditemukan!\n");
+		printf("No. Rekening Tujuan Tidak Terdaftar!\n");
 		return 0;
 	}
 	else
@@ -183,7 +205,6 @@ int cariNasabahBerdasarkanNorek(char *in_norek)
 		return 0;
 	}
 }
-
 // void gantiPin()
 // {
 //     int in_pin, in_menu;
@@ -200,7 +221,7 @@ int cariNasabahBerdasarkanNorek(char *in_norek)
 //     }
 //     else
 //     {
-//         system("clear");
+//         system("cls");
 //         printf("PIN lama salah, harap periksa kembali PIN lama anda!\n");
 //         printf("1. Lanjutkan\n");
 //         printf("2. Keluar\n");
@@ -256,20 +277,20 @@ void formatNumber(int n)
 
 void readFile(char *filename)
 {
-    char s[100];
-    FILE *f;
-    f = fopen(filename, "r");
-    if (f == NULL)
-    {
-        printf("File tidak bisa dibuka\n");
-    }
-    else
-    {
-        while (!feof(f))
-        {
-            fgets(s, sizeof(s), f);
-            printf("%s", s);
-        }
-        fclose(f);
-    }
+	char s[100];
+	FILE *f;
+	f = fopen(filename, "r");
+	if (f == NULL)
+	{
+		printf("File tidak bisa dibuka\n");
+	}
+	else
+	{
+		while (!feof(f))
+		{
+			fgets(s, sizeof(s), f);
+			printf("%s", s);
+		}
+		fclose(f);
+	}
 }

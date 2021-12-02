@@ -2,6 +2,7 @@
 #include <string.h>
 #include "db_bank.h"
 #include "fungsi.h"
+#include "lib_chalk.h"
 
 int percobaan = 0;
 char pin[6];
@@ -13,8 +14,10 @@ nasabah loggin_user;
 int menu();
 int autentikasiNorek(char *in_norek);
 int autentikasiPIN(char *in_pin);
+void centerString(char *s);
 int inputPIN();
 int isItBlocked();
+void printLine();
 
 int main()
 {
@@ -25,13 +28,12 @@ int main()
     if (autentikasiNorek(norek))
     {
         welcome();
-        inputPIN();
+        return inputPIN();
     }
-    else
+    
+    if (!isItBlocked())
     {
-        isItBlocked();
         main();
-        system("clear");
     }
 
     return 0;
@@ -39,30 +41,27 @@ int main()
 
 int inputPIN()
 {
-    printf("Masukkan PIN Anda:");
+    printf("Masukkan PIN ATM Anda:");
     scanf("%s", &pin);
     if (autentikasiPIN(pin))
     {
-        menu();
+        return menu();
+    }
+
+    if (isItBlocked())
+    {
+        printf("\nKartu ATM Anda Terblokir!\n");
+        printf("Hubungi Call Center Bank Millenial: 08787878!");
         return 0;
     }
 
-    if (!isItBlocked())
-    {
-        welcome();
-        inputPIN();
-    }
+    welcome();
+    return inputPIN();
 }
 
 int isItBlocked()
 {
-    if (percobaan > 3)
-    {
-        printf("Kartu ATM Anda Terblokir!\n");
-        printf("Hubungi Call Center Bank Millenial: 08787878!");
-        return 1;
-    }
-    return 0;
+    return percobaan > 3 ? 1 : 0;
 }
 
 int autentikasiNorek(char *in_norek)
@@ -77,7 +76,7 @@ int autentikasiNorek(char *in_norek)
                 return 1;
             }
         }
-        printf("No. Rekening Tidak Ditemukan!\n");
+        printf("No. Rekening Tidak Terdaftar!\n");
         return 0;
     }
     else
@@ -114,14 +113,22 @@ int autentikasiPIN(char *in_pin)
 
 int menu()
 {
-    system("clear");
-    printf("                              MENU UTAMA\n");
-    printf("                    ===============================\n");
-    printf("  1 - Tarik Tunai\n");
-    printf("  2 - Cek Saldo\n");
-    printf("  3 - Transfer\n");
-    printf("  4 - Ganti PIN\n");
-    printf("  5 - Keluar\n");
+    //Untuk menampilkan pesan error jika pilihan user tidak tersedia
+    if (pilihan <= 5)
+    {
+        system("cls");
+    }
+
+    printLine();
+    centerString("MENU UTAMA");
+    printf("\n");
+    printLine();
+
+    printf("1 - Tarik Tunai\n");
+    printf("2 - Cek Saldo\n");
+    printf("3 - Transfer\n");
+    printf("4 - Ganti PIN\n");
+    printf("5 - Keluar\n");
 
     printf("\n\nPILIHAN : ");
     scanf("%d", &pilihan);
@@ -136,7 +143,11 @@ int menu()
         // cekSaldo();
         break;
     case 3:
-        transfer(loggin_user);
+        if (transfer(loggin_user) == 1)
+        {
+            menu();
+        }
+        readFile("thanks.txt");
         break;
     case 4:
         printf("Ganti PIN");
@@ -144,11 +155,28 @@ int menu()
         break;
     case 5:
         readFile("thanks.txt");
-        // gantiPin();
         break;
     default:
-        // errorInput();
+        printf(CHALK_BG_RED("Pilihan Menu Tidak Tersedia!\n"));
         menu();
+        break;
     }
     return 0;
+}
+
+void centerString(char *s)
+{
+    int l = strlen(s);
+    int pos = (int)((60 - l) / 2);
+    for (int i = 0; i < pos; i++)
+        printf(" ");
+
+    printf("%s", s);
+}
+
+void printLine()
+{
+    for (int i = 0; i < 59; i++)
+        printf("=");
+    printf("\n");
 }

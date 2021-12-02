@@ -141,8 +141,11 @@ int menu()
         // penarikan();
         break;
     case 2:
-        printf("Cek Saldo");
-        // cekSaldo();
+        if (cekSaldo(loggin_user) == 1)
+        {
+            menu();
+        }
+        readFile("thanks.txt");
         break;
     case 3:
         if (transfer(loggin_user) == 1)

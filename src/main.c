@@ -2,7 +2,9 @@
 #include <string.h>
 #include "db_bank.h"
 #include "fungsi.h"
+// #include <windows.h>
 #include "lib_chalk.h"
+#include "chalk.h"
 
 int percobaan = 0;
 char pin[6];
@@ -30,7 +32,7 @@ int main()
         welcome();
         return inputPIN();
     }
-    
+
     if (!isItBlocked())
     {
         main();
@@ -50,8 +52,8 @@ int inputPIN()
 
     if (isItBlocked())
     {
-        printf("\nKartu ATM Anda Terblokir!\n");
-        printf("Hubungi Call Center Bank Millenial: 08787878!");
+        printc("\nKartu ATM Anda Terblokir!\n", FOREGROUND_RED);
+        printc("Hubungi Call Center Bank Millenial: 08787878!", FOREGROUND_RED);
         return 0;
     }
 
@@ -76,13 +78,13 @@ int autentikasiNorek(char *in_norek)
                 return 1;
             }
         }
-        printf("No. Rekening Tidak Terdaftar!\n");
+        printc("No. Rekening Tidak Terdaftar!\n", FOREGROUND_RED);
         return 0;
     }
     else
     {
-        printf("No. Rekening Anda Tidak Valid!\n");
-        printf("Pastikan No. Rekening Anda Benar dan Terdiri dari 5 Digit\n");
+        printc("No. Rekening Anda Tidak Valid!\n", FOREGROUND_RED);
+        printc("Pastikan No. Rekening Anda Benar dan Terdiri dari 5 Digit\n", FOREGROUND_RED);
         return 0;
     }
 }
@@ -98,15 +100,15 @@ int autentikasiPIN(char *in_pin)
         percobaan++;
         if (!isItBlocked())
         {
-            printf("PIN Anda Salah!\n");
-            printf("Pastikan PIN Anda Benar dan Terdiri dari 6 Digit\n");
+            printc("PIN Anda Salah!\n", FOREGROUND_RED);
+            printc("Pastikan PIN Anda Benar dan Terdiri dari 6 Digit\n", FOREGROUND_RED);
         }
         return 0;
     }
     else
     {
-        printf("PIN Anda Tidak Valid!\n");
-        printf("Pastikan PIN Anda Benar dan Terdiri dari 6 Digit\n");
+        printc("PIN Anda Tidak Valid!\n", FOREGROUND_RED);
+        printc("Pastikan PIN Anda Benar dan Terdiri dari 6 Digit\n", FOREGROUND_RED);
         return 0;
     }
 }

@@ -51,11 +51,11 @@ int cekSaldo(nasabah loggin_user)
 int penarikan(nasabah loggin_user)
 {
 	int nominal;
-	system("cls");
+	
     printf("\n\n                   MASUKKAN NOMINAL KELIPATAN RP 50000\n\n");
     printf("                           Rp ");
     scanf("%d", &nominal);
-    printf("\n\n                  1. BENAR\n\n                  2.KELUAR\n\n                  3.KEMBALI KE MENU");
+    printf("\n\n                  1. BENAR\n\n                  2. KELUAR\n\n                  3. KEMBALI KE MENU");
     printf("\n\n\tPILIHAN : ");
     scanf("%d", &pilihan);
 
@@ -65,16 +65,29 @@ int penarikan(nasabah loggin_user)
         if ((nominal % 50000 == 0) && loggin_user.saldo > nominal)
         {
             loggin_user.saldo -= nominal;
+			printf("\n\t\tTRANSAKSI BERHASIL");
+			printf("\n\t\tSisa saldo anda: Rp ");
             formatNumber(loggin_user.saldo);
+			yesNoQuestion("\n\tApakah Anda Ingin Melakukan Transaksi Lain?");
+			if (pilihan == 1)
+				return 1;
+			else
+				return 0;
 			break;            
         }
         else
         {
-            printf("\t\t                    Nominal Tidak Valid");
+            printf("\n\t\tNominal Tidak Valid");
+			printf("\n\t\tSisa saldo anda: Rp ");
             formatNumber(loggin_user.saldo);
+			yesNoQuestion("\n\tApakah Anda Ingin Melanjutkan Transaksi?");
+			if (pilihan == 1)
+				return penarikan(loggin_user);
+			else
+				return 0;
+						
             break;
-        }
-		
+        }		
     case 2:
         return 0;
 		break;

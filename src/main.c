@@ -43,7 +43,7 @@ int main()
 
 int inputPIN()
 {
-    printf("Masukkan PIN ATM Anda:");
+    printf("Masukkan PIN ATM Anda: ");
     scanf("%s", &pin);
     if (autentikasiPIN(pin))
     {
@@ -137,8 +137,11 @@ int menu()
     switch (pilihan)
     {
     case 1:
-        printf("Tarik Tunai");
-        // penarikan();
+        if (penarikan(loggin_user) == 1)
+        {
+            menu();
+        }
+        readFile("thanks.txt");
         break;
     case 2:
         if (cekSaldo(loggin_user) == 1)

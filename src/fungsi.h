@@ -38,67 +38,53 @@ void yesNoQuestion(char *text)
 	}
 }
 
-int cekSaldo()
+int cekSaldo(nasabah loggin_user)
 {
 	system("cls");
 	printf("\n\n                              SISA SALDO ANDA\n\n");
-	// printf("\nRp %d", saldo);
-	printf("\n\n\n                APAKAH ANDA INGIN MELAKUKAN TRANSAKSI LAIN?\n\n");
-	printf("                          1. YA\n\n                          2. TIDAK\n\n");
-	printf("Pilihan : ");
-	// scanf("%d", &pilihan);
-	// switch (pilihan)
-	// {
-	// case 1:
-	//     menu();
-	//     break;
-	// case 2:
-	//     keluar();
-	//     break;
-	// default:
-	//     errorInput();
-	//     cekSaldo();
-	// }
-	return 0;
+	formatNumber(loggin_user.saldo);
+	yesNoQuestion("\n\n\n                APAKAH ANDA INGIN MELAKUKAN TRANSAKSI LAIN?\n\n");	
+	if (pilihan == 1)
+		return 1;
+	else
+		return 0;	
 }
 
-// int penarikan(norek, pin)
-// {
-//     int nominal;
+int penarikan(nasabah loggin_user)
+{
+	int nominal;
+	system("cls");
+    printf("\n\n                   MASUKKAN NOMINAL KELIPATAN RP 50000\n\n");
+    printf("                           Rp ");
+    scanf("%d", &nominal);
+    printf("\n\n                  1. BENAR\n\n                  2.KELUAR\n\n                  3.KEMBALI KE MENU");
+    printf("\n\n\tPILIHAN : ");
+    scanf("%d", &pilihan);
 
-//     system("cls");
-//     printf("\n\n                   MASUKKAN NOMINAL KELIPATAN RP 50000\n\n");
-//     printf("                           Rp ");
-//     scanf("%d", &nominal);
-//     printf("\n\n                  1. BENAR\n\n                  2.KELUAR\n\n                  3.KEMBALI KE MENU");
-//     printf("\n\n\tPILIHAN : ");
-//     scanf("%d", &pilihan);
-
-//     switch (pilihan)
-//     {
-//     case 1:
-
-//         // if ((nominal % 50000 == 0) && data_nasabah[counter]->saldo > nominal)
-//         // {
-//         //     saldo -= nominal;
-//         //     cekSaldo();
-//         //     break;
-//         // }
-//         // else
-//         // {
-//         //     printf("\t\t                    Nominal Tidak Valid");
-//         //     cekSaldo();
-//         //     break;
-//         // }
-
-//     case 2:
-//         keluar();
-//     default:
-//         menu();
-//         break;
-//     }
-//     return 0;
-
+    switch (pilihan)
+    {
+    case 1:
+        if ((nominal % 50000 == 0) && loggin_user.saldo > nominal)
+        {
+            loggin_user.saldo -= nominal;
+            formatNumber(loggin_user.saldo);
+			break;            
+        }
+        else
+        {
+            printf("\t\t                    Nominal Tidak Valid");
+            formatNumber(loggin_user.saldo);
+            break;
+        }
+		
+    case 2:
+        return 0;
+		break;
+    default:
+        return 1;
+        break;
+    }    
+}
 /**
  * @todo Belum dilakukan pengecekan apakah inputnya karakter atau angka 
  */

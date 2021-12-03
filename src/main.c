@@ -3,6 +3,9 @@
 #include "db_bank.h"
 #include "fungsi.h"
 #include <windows.h>
+#include <signal.h>
+
+#define SCREEN_WIDTH 60
 
 int percobaan = 0;
 char pin[6];
@@ -14,30 +17,42 @@ nasabah logged_user;
 int menu();
 int autentikasiNorek(char *norek);
 int autentikasiPIN(char *pin);
-void centerString(char *s);
 int inputPIN();
 int isItBlocked();
 void printLine();
+void showBlockedCardMessage();
 
 int main()
 {
+    /**
+     * Ketika user memasukkan norek, maka jalankan kode di bawah ini 
+     * (ditandai dengan scanf() mengembalikan integer lebih dari 0). 
+     * Jika tidak, maka jangan jalankan kode di bawah ini. 
+     * Hal ini guna menghindari duplikasi output.
+     */
+    //inisialisasi data nasabah
     dataNasabah(data_nasabah);
-    printf("Masukkan No. Rekening Anda: ");
-    scanf("%s", norek);
-
-    if (autentikasiNorek(norek))
+    printf("MASUKKAN NO. REKENING ANDA: ");
+    if (scanf("%s", norek) == 1)
     {
-        welcome();
-        return inputPIN();
+        if (autentikasiNorek(norek))
+        {
+            if (!is_error)
+            {
+                system("cls");
+            }
+            welcome();
+            return inputPIN();
+        }
+        main();
     }
     
-    main();
     return 0;
 }
 
 int inputPIN()
 {
-    printf("Masukkan PIN ATM Anda:");
+    printf("MASUKKAN PIN ATM ANDA: ");
     scanf("%s", &pin);
     if (autentikasiPIN(pin))
     {
@@ -65,13 +80,23 @@ int autentikasiNorek(char *norek)
                 return 1;
             }
         }
-        printc("No. Rekening Tidak Terdaftar!\n", FOREGROUND_RED);
+        /**
+         * jika program menjalankan kode di bawah ini,
+         * tandanya ketika mencocokkan no rekening yg diinput
+         * dengan yang ada di mini database, itu tidak ada yg
+         * cocok sama sekali. Artinya No. Rekening tidak terdaftar.
+         */
+        printc("\nNO. REKENING ANDA TIDAK TERDAFTAR!\n", FOREGROUND_RED);
+        Sleep(2000);
+        system("cls");
         return 0;
     }
     else
     {
-        printc("No. Rekening Anda Tidak Valid!\n", FOREGROUND_RED);
-        printc("Pastikan No. Rekening Anda Benar dan Terdiri dari 5 Digit\n", FOREGROUND_RED);
+        printc("\nNO. REKENING ANDA TIDAK VALID!\n", FOREGROUND_RED);
+        printc("PASTIKAN NO. REKENING ANDA BENAR DAN TERDIRI DARI 5 DIGIT\n", FOREGROUND_RED);
+        Sleep(2000);
+        system("cls");
         return 0;
     }
 }
@@ -86,96 +111,113 @@ int autentikasiPIN(char *pin)
         }
 
         percobaan++;
-        if (!isItBlocked())
-        {
-            printc("PIN Anda Salah!\n", FOREGROUND_RED);
-            printc("Pastikan PIN Anda Benar dan Terdiri dari 6 Digit\n", FOREGROUND_RED);
-            return 0;
-        }
-        else
-        {
-            printc("\nKartu ATM Anda Terblokir!\n", FOREGROUND_RED);
-            printc("Hubungi Call Center Bank Millenial: 08787878!", FOREGROUND_RED);
-            exit(1);
-        }
+        system("cls");
+        showBlockedCardMessage();
+
+        printc("\nPIN ANDA SALAH!\n", FOREGROUND_RED);
+        printc("PASTIKAN PIN ANDA BENAR\n", FOREGROUND_RED);
+        Sleep(2000);
+        system("cls");
+        return 0;
     }
     else
     {
-        printc("PIN Anda Tidak Valid!\n", FOREGROUND_RED);
-        printc("Pastikan PIN Anda Benar dan Terdiri dari 6 Digit\n", FOREGROUND_RED);
+        percobaan++;
+        showBlockedCardMessage();
+        system("cls");
+        printc("\nPIN ANDA TIDAK VALID!\n", FOREGROUND_RED);
+        printc("PASTIKAN PIN ANDA BENAR DAN TERDIRI DARI 6 DIGIT\n", FOREGROUND_RED);
+        Sleep(2000);
+        system("cls");
         return 0;
     }
 }
 
+void showBlockedCardMessage()
+{
+    if (isItBlocked())
+    {
+        system("cls");
+        printc("\nKARTU ATM ANDA TERBLOKIR!\n", FOREGROUND_RED);
+        printc("HUBUNGI CALL CENTER BANK MILLENIAL: 08787878!", FOREGROUND_RED);
+        logged_user.status = "terblokir";
+        exit(1);
+    }
+}
+
+/**
+ * @brief Untuk menampilkan menu utama ATM
+ * 
+ * @return int 1 jika pilihan benar, 0 jika pilihan salah
+ * @todo 
+ * - belum ada error handling ketika user memasukkan karakter, 
+ *   sehingga langsung keluar dari console ketika input bukan angka
+ */
 int menu()
 {
-    //Untuk menampilkan pesan error jika pilihan user tidak tersedia
+
+    //Untuk menghindari layar diclear ketika ada pesan error
     if (pilihan <= 5)
     {
         system("cls");
     }
 
-    printLine();
-    centerString("MENU UTAMA");
+    printLine("=", SCREEN_WIDTH);
+    centerString("MENU UTAMA", SCREEN_WIDTH);
     printf("\n");
-    printLine();
+    printLine("=", SCREEN_WIDTH);
 
-    printf("1 - Tarik Tunai\n");
-    printf("2 - Cek Saldo\n");
-    printf("3 - Transfer\n");
-    printf("4 - Ganti PIN\n");
-    printf("5 - Keluar\n");
+    printf("1 - TARIK TUNAI\n");
+    printf("2 - CEK SALDO\n");
+    printf("3 - TRANSFER\n");
+    printf("4 - GANTI PIN\n");
+    printf("5 - KELUAR\n");
 
     printf("\n\nPILIHAN : ");
-    scanf("%d", &pilihan);
+    if (scanf("%d", &pilihan) < 1)
+    {
+        return 0;
+    }
+
     switch (pilihan)
     {
     case 1:
-        printf("Tarik Tunai");
-        // penarikan();
+        if (penarikan(&logged_user) == 1)
+        {
+            return menu();
+        }
+        readFile("src/util/thanks.txt");
         break;
     case 2:
-        if (cekSaldo(loggin_user) == 1)
+        if (cekSaldo(&logged_user) == 1)
         {
-            menu();
+            return menu();
         }
-        readFile("thanks.txt");
+        readFile("src/util/thanks.txt");
         break;
     case 3:
-        if (transfer(logged_user) == 1)
+        if (transfer(&logged_user) == 1)
         {
-            menu();
+            return menu();
         }
         readFile("src/util/thanks.txt");
         break;
     case 4:
-        printf("Ganti PIN");
-        // gantiPin();
+        if (gantiPin(&logged_user, pin, &percobaan) == 1)
+        {
+            return menu();
+        }
+        readFile("src/util/thanks.txt");
         break;
     case 5:
         readFile("src/util/thanks.txt");
         break;
     default:
-        printc("Pilihan Menu Tidak Tersedia!\n", FOREGROUND_RED);
+        printc("\nPILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);
+        Sleep(1000);
+        system("cls");
         menu();
         break;
     }
     return 0;
-}
-
-void centerString(char *s)
-{
-    int l = strlen(s);
-    int pos = (int)((60 - l) / 2);
-    for (int i = 0; i < pos; i++)
-        printf(" ");
-
-    printf("%s", s);
-}
-
-void printLine()
-{
-    for (int i = 0; i < 59; i++)
-        printf("=");
-    printf("\n");
 }

@@ -12,6 +12,11 @@
         "locale.h": "c",
         "sstream": "c",
         "utils.h": "c",
-        "ctype.h": "c"
+        "ctype.h": "c",
+        "charconv": "c",
+        "format": "c",
+        "memory": "c",
+        "new": "c",
+        "assert.h": "c"
     }
 }

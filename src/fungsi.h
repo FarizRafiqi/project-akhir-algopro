@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-#include "lib_chalk.h"
 #include <ctype.h>
+#include "util/chalk.h"
+#include "util/utils.h"
 
+char *ptr;
 char norek_tujuan[5];
 int pilihan;
 int nominal = 0;
@@ -18,7 +20,7 @@ int inputTransferNominal(int *in_nominal);
 
 void welcome()
 {
-	readFile("welcome.txt");
+	readFile("src/util/welcome.txt");
 	printf("TEKAN 'ENTER' PADA KEYBOARD JIKA SELESAI MEMASUKKAN PIN\n");
 }
 
@@ -116,15 +118,15 @@ int inputTransferNominal(int *in_nominal)
 	return 1;
 }
 
-int transfer(nasabah loggin_user)
+int transfer(nasabah logged_user)
 {
 	printf("Masukkan No. Rekening Tujuan: ");
 	scanf("%s", norek_tujuan);
 
-	if (!strcmp(norek_tujuan, loggin_user.norek))
+	if (!strcmp(norek_tujuan, logged_user.norek))
 	{
 		printf("No. Rekening Tujuan Harus Berbeda dengan No. Rekening Anda!\n");
-		transfer(loggin_user);
+		transfer(logged_user);
 	}
 
 	if (cariNasabahBerdasarkanNorek(norek_tujuan))
@@ -132,17 +134,17 @@ int transfer(nasabah loggin_user)
 		system("cls");
 		inputTransferNominal(&nominal);
 
-		if (loggin_user.saldo < nominal)
+		if (logged_user.saldo < nominal)
 		{
-			printf(CHALK_BG_RED("Transaksi Gagal\n"));
-			printf(CHALK_BG_RED("Saldo Tidak Mencukupi!"));
+			printc("Transaksi Gagal\n", FOREGROUND_RED);
+			printc("Saldo Tidak Mencukupi!", FOREGROUND_RED);
 			yesNoQuestion("Transaksi lagi?");
 			return pilihan;
 		}
 
 		system("cls");
 
-		printf("\nDari\t\t: %s\n", loggin_user.nama);
+		printf("\nDari\t\t: %s\n", logged_user.nama);
 		printf("Tujuan\t\t: %s\n", nasabah_tujuan.nama);
 		printf("Jumlah\t\t: Rp ");
 		formatNumber(nominal);
@@ -164,10 +166,10 @@ int transfer(nasabah loggin_user)
 		switch (pilihan)
 		{
 		case 1:
-			loggin_user.saldo -= total;
+			logged_user.saldo -= total;
 			nasabah_tujuan.saldo += nominal;
 			printf("Transaksi Berhasil Sisa Saldo Anda: Rp ");
-			formatNumber(loggin_user.saldo);
+			formatNumber(logged_user.saldo);
 			yesNoQuestion("Apakah Anda Ingin Melakukan Transaksi Lain?");
 			return pilihan;
 		case 2:
@@ -179,7 +181,7 @@ int transfer(nasabah loggin_user)
 			return 0;
 		}
 	}
-	transfer(loggin_user);
+	transfer(logged_user);
 }
 
 int cariNasabahBerdasarkanNorek(char *in_norek)
@@ -256,40 +258,3 @@ int cariNasabahBerdasarkanNorek(char *in_norek)
 //         }
 //     }
 // }
-
-void formatNumber(int n)
-{
-	if (n < 0)
-	{
-		printf("-");
-		formatNumber(-n);
-		return;
-	}
-	if (n < 1000)
-	{
-		printf("%d", n);
-		return;
-	}
-	formatNumber(n / 1000);
-	printf(".%03d", n % 1000);
-}
-
-void readFile(char *filename)
-{
-	char s[100];
-	FILE *f;
-	f = fopen(filename, "r");
-	if (f == NULL)
-	{
-		printf("File tidak bisa dibuka\n");
-	}
-	else
-	{
-		while (!feof(f))
-		{
-			fgets(s, sizeof(s), f);
-			printf("%s", s);
-		}
-		fclose(f);
-	}
-}

@@ -4,6 +4,14 @@
         "stdio.h": "c",
         "stdlib.h": "c",
         "string.h": "c",
-        "fungsi.h": "c"
+        "fungsi.h": "c",
+        "cstdio": "c",
+        "windows.h": "c",
+        "chalk.h": "c",
+        "filesystem": "c",
+        "locale.h": "c",
+        "sstream": "c",
+        "utils.h": "c",
+        "ctype.h": "c"
     }
 }

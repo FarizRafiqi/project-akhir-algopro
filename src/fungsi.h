@@ -5,9 +5,7 @@
 #include <ctype.h>
 #include "util/chalk.h"
 #include "util/utils.h"
-#include <signal.h>
 #include "constants.c"
-#include <dos.h>
 
 int is_error = 0;
 char norek_tujuan[5];
@@ -31,7 +29,7 @@ void simpanStruk(nasabah *logged_user, nasabah nasabah_tujuan, int nominal, int 
 
 void welcome()
 {
-	readFile("src/util/welcome.txt");
+	readFile("util\\welcome.txt");
 	printf("TEKAN 'ENTER' PADA KEYBOARD JIKA SELESAI MEMASUKKAN PIN\n");
 }
 
@@ -133,7 +131,7 @@ int penarikan(nasabah *logged_user)
 	}
 }
 /**
- * @todo Belum dilakukan pengecekan apakah inputnya karakter atau angka 
+ * @todo Belum dilakukan pengecekan apakah inputnya karakter atau angka
  */
 int inputTransferNominal(int *in_nominal)
 {
@@ -145,7 +143,8 @@ int inputTransferNominal(int *in_nominal)
 	centerString("MINIMAL TRANSFER ADALAH RP 50.000", SCREEN_WIDTH);
 
 	printf("\n\nMASUKKAN NOMINAL: ");
-	if(scanf("%d", in_nominal) < 1) {
+	if (scanf("%d", in_nominal) < 1)
+	{
 		return 0;
 	}
 
@@ -384,10 +383,11 @@ int gantiPin(nasabah *logged_user, char *pin, int *percobaan)
 	centerString("GANTI PIN SECARA BERKALA DEMI KEAMANAN REKENING ANDA\n\n\n", SCREEN_WIDTH);
 
 	printf("MASUKKAN PIN LAMA: ");
-	if (scanf("%s", pin) < 1)
-	{
-		return 0;
-	}
+	maskingInput(pin, "*");
+	//	if (scanf("%s", pin) < 1)
+	//	{
+	//		return 0;
+	//	}
 
 	if (!isPINValid(pin))
 	{
@@ -397,11 +397,12 @@ int gantiPin(nasabah *logged_user, char *pin, int *percobaan)
 
 	if (strcmp(pin, logged_user->pin) == 0)
 	{
-		printf("MASUKKAN PIN BARU: ");
-		if (scanf("%s", pin) < 1)
-		{
-			return 0;
-		}
+		printf("\nMASUKKAN PIN BARU: ");
+		maskingInput(pin, "*");
+		//		if (scanf("%s", pin) < 1)
+		//		{
+		//			return 0;
+		//		}
 
 		if (!isPINValid(pin))
 		{
@@ -450,11 +451,12 @@ int isPINValid(char *pin)
 
 int confirmNewPIN(char *pin)
 {
-	printf("KONFIRMASI PIN BARU: ");
-	if (scanf("%s", konfirmasi_pin) < 1)
-	{
-		return 0;
-	}
+	printf("\nKONFIRMASI PIN BARU: ");
+	maskingInput(konfirmasi_pin, "*");
+	//	if (scanf("%s", konfirmasi_pin) < 1)
+	//	{
+	//		return 0;
+	//	}
 
 	if (!isPINValid(konfirmasi_pin))
 	{

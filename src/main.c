@@ -1,11 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "db_bank.h"
 #include "fungsi.h"
 #include <windows.h>
-#include <signal.h>
-
-#define SCREEN_WIDTH 60
 
 int percobaan = 0;
 char pin[6];
@@ -25,11 +23,12 @@ void showBlockedCardMessage();
 int main()
 {
     /**
-     * Ketika user memasukkan norek, maka jalankan kode di bawah ini 
-     * (ditandai dengan scanf() mengembalikan integer lebih dari 0). 
-     * Jika tidak, maka jangan jalankan kode di bawah ini. 
+     * Ketika user memasukkan norek, maka jalankan kode di bawah ini
+     * (ditandai dengan scanf() mengembalikan integer lebih dari 0).
+     * Jika tidak, maka jangan jalankan kode di bawah ini.
      * Hal ini guna menghindari duplikasi output.
      */
+    
     //inisialisasi data nasabah
     dataNasabah(data_nasabah);
     printf("MASUKKAN NO. REKENING ANDA: ");
@@ -46,14 +45,15 @@ int main()
         }
         main();
     }
-    
+
     return 0;
 }
 
 int inputPIN()
 {
     printf("MASUKKAN PIN ATM ANDA: ");
-    scanf("%s", &pin);
+    maskingInput(pin, "*");
+    //scanf("%s", &pin);
     if (autentikasiPIN(pin))
     {
         return menu();
@@ -147,10 +147,10 @@ void showBlockedCardMessage()
 
 /**
  * @brief Untuk menampilkan menu utama ATM
- * 
+ *
  * @return int 1 jika pilihan benar, 0 jika pilihan salah
- * @todo 
- * - belum ada error handling ketika user memasukkan karakter, 
+ * @todo
+ * - belum ada error handling ketika user memasukkan karakter,
  *   sehingga langsung keluar dari console ketika input bukan angka
  */
 int menu()
@@ -186,31 +186,31 @@ int menu()
         {
             return menu();
         }
-        readFile("src/util/thanks.txt");
+        readFile("src\\util\\thanks.txt");
         break;
     case 2:
         if (cekSaldo(&logged_user) == 1)
         {
             return menu();
         }
-        readFile("src/util/thanks.txt");
+        readFile("src\\util\\thanks.txt");
         break;
     case 3:
         if (transfer(&logged_user) == 1)
         {
             return menu();
         }
-        readFile("src/util/thanks.txt");
+        readFile("src\\util\\thanks.txt");
         break;
     case 4:
         if (gantiPin(&logged_user, pin, &percobaan) == 1)
         {
             return menu();
         }
-        readFile("src/util/thanks.txt");
+        readFile("src\\util\\thanks.txt");
         break;
     case 5:
-        readFile("src/util/thanks.txt");
+        readFile("src\\util\\thanks.txt");
         break;
     default:
         printc("\nPILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);

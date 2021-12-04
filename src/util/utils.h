@@ -5,10 +5,17 @@
 #include <windows.h>
 #include <time.h>
 #include <assert.h>
+#include <conio.h>
+
+#define SCREEN_WIDTH 60
+#define ENTER 13
+#define TAB 9
+#define BKSPC 8
+#define SPACE 32
 
 /**
  * @brief Untuk mengatur format nomor, sehingga memiliki pemisah perseribuan
- * 
+ *
  * @param n nomor yang ingin diformat
  */
 void formatNumber(int n)
@@ -30,10 +37,10 @@ void formatNumber(int n)
 
 /**
  * @brief Untuk mencari posisi dari sebuah string
- * 
+ *
  * @param haystack sumber string
  * @param needle string yang ingin dicari
- * @return int 
+ * @return int
  */
 int strpos(char *haystack, char *needle)
 {
@@ -45,7 +52,7 @@ int strpos(char *haystack, char *needle)
 
 /**
  * @brief Untuk mengambil sebagian dari string diantara index awal dan akhir string
- * 
+ *
  * @param s sumber string
  * @param sub string yang ingin diambil
  * @param p index awal string
@@ -73,7 +80,7 @@ void basePath(char *fullpath, char *folder)
 }
 /**
  * @brief Untuk membaca file
- * 
+ *
  * @param filename nama file
  */
 void readFile(char *filename)
@@ -86,7 +93,7 @@ void readFile(char *filename)
     int base_path_pos = strpos(fullpath, "algopro") + 8;
     char base_path[MAX_PATH];
     substr(fullpath, base_path, 1, base_path_pos);
-    // printf("%s", base_path);
+    //printf("%s", strcat(base_path, filename));
 
     f = fopen(strcat(base_path, filename), "r");
     if (f == NULL)
@@ -106,7 +113,7 @@ void readFile(char *filename)
 
 /**
  * @brief Untuk memposisikan string agar berada pas ditengah
- * 
+ *
  * @param s string yang ingin ditengahkan posisinya
  * @param w lebar string
  */
@@ -132,7 +139,7 @@ char *getCenteredString(char *s, int w)
 }
 /**
  * @brief Untuk membuat garis dari karakter yang ditentukan
- * 
+ *
  * @param c karakter yang ingin dicetak
  * @param n banyak karakter yang ingin dicetak
  */
@@ -259,4 +266,37 @@ char *strrep(const char *s1, const char *s2, const char *s3)
     memcpy(dst, start_substr, remains);
     assert(strlen(s1_with_s3) == s1_with_s3_len);
     return s1_with_s3;
+}
+
+void maskingInput(char *input, char *mask)
+{
+    int i = 0;
+    char ch;
+    while (1)
+    {
+        ch = getch();
+        if (ch == ENTER)
+        {
+            input[i] = '\0';
+            break;
+        }
+        else if (ch == BKSPC)
+        {
+            if (i > 0)
+            {
+                i--;
+                printf("\b \b");
+            }
+        }
+        else if (ch == TAB || ch == SPACE)
+        {
+            continue;
+        }
+        else
+        {
+            input[i] = ch;
+            i++;
+            printf(mask);
+        }
+    }
 }

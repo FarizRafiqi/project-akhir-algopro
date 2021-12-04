@@ -138,12 +138,6 @@ int isTheBalanceEnough(int saldo, int nominal)
  */
 void menu()
 {
-	// Untuk menghindari layar diclear ketika ada pesan error
-	if (pilihan <= 5)
-	{
-		system("cls");
-	}
-
 	printLine("=", SCREEN_WIDTH);
 	centerString("MENU UTAMA", SCREEN_WIDTH);
 	printf("\n");

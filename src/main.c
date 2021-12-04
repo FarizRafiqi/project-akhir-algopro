@@ -1,9 +1,6 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "db_bank.h"
 #include "fungsi.h"
-#include <windows.h>
 
 void inputPIN();
 

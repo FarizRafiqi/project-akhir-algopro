@@ -7,30 +7,50 @@
 #include "util/utils.h"
 #include "constants.c"
 
-int is_error = 0;
-char norek_tujuan[5];
-char konfirmasi_pin[6];
-int pilihan;
-int nominal = 0;
-int biaya_admin = 6500;
-nasabah nasabah_tujuan;
-
 #define SCREEN_WIDTH 60
 
-int cariNasabahBerdasarkanNorek(char *in_norek);
+char norek_tujuan[5];
+char konfirmasi_pin[6];
+int nominal = 0;
+int biaya_admin = 6500;
+int percobaan = 0;
+char pin[6];
+char norek[5];
+int pilihan = 0;
+int is_login = 0;
+
+nasabah logged_user;
+nasabah nasabah_tujuan;
+
 void formatNumber(int n);
 void readFile(char *filename);
 int inputTransferNominal(int *in_nominal);
-void transactionQuestion();
+int transactionQuestion();
 int isPINValid(char *pin);
 int confirmNewPIN(char *pin);
-int isTheBalanceEnough(int saldo, int nominal);
 void simpanStruk(nasabah *logged_user, nasabah nasabah_tujuan, int nominal, int total);
+void menu();
+void penarikan(nasabah *logged_user);
+int cekSaldo(nasabah *logged_user);
+void transfer(nasabah *logged_user);
+void gantiPin(nasabah *logged_user, char *pin, int *percobaan);
+
+int isItBlocked()
+{
+	return percobaan > 3 ? 1 : 0;
+}
 
 void welcome()
 {
 	readFile("src\\util\\welcome.txt");
 	printf("TEKAN 'ENTER' PADA KEYBOARD JIKA SELESAI MEMASUKKAN PIN\n");
+}
+
+void exitProgram()
+{
+	system("cls");
+	readFile("src\\util\\thanks.txt");
+	exit(1);
 }
 
 void yesNoQuestion(char *text)
@@ -40,20 +60,218 @@ void yesNoQuestion(char *text)
 
 	printf("MASUKKAN PILIHAN ANDA: ");
 	scanf("%d", &pilihan);
-	if (pilihan < 0 && pilihan > 2)
+	if (pilihan < 1 && pilihan > 2)
 	{
 		printc("PILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);
+		Sleep(1000);
 		yesNoQuestion(text);
+	}
+
+	if (pilihan == 1)
+	{
+		menu();
+	}
+	else
+	{
+		exitProgram();
 	}
 }
 
-void transactionQuestion()
+int transactionQuestion()
 {
 	printf("\n\n1. BENAR\n");
 	printf("2. KELUAR\n");
 	printf("3. KEMBALI KE MENU\n");
 	printf("MASUKKAN PILIHAN ANDA: ");
 	scanf("%d", &pilihan);
+
+	if (pilihan < 1 && pilihan > 3)
+	{
+		printc("PILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);
+		Sleep(1000);
+		return transactionQuestion();
+	}
+
+	if (pilihan == 2)
+	{
+		exitProgram();
+	}
+	else if (pilihan == 3)
+	{
+		menu();
+	}
+
+	return pilihan;
+}
+
+void showBlockedCardMessage()
+{
+	if (isItBlocked())
+	{
+		system("cls");
+		printc("\nKARTU ATM ANDA TERBLOKIR!\n", FOREGROUND_RED);
+		printc("HUBUNGI CALL CENTER BANK MILLENIAL: 08787878!", FOREGROUND_RED);
+		logged_user.status = "terblokir";
+		exitProgram();
+	}
+}
+
+int isTheBalanceEnough(int saldo, int nominal)
+{
+	if (saldo < nominal)
+	{
+		system("cls");
+		printc("TRANSAKSI GAGAL\n", FOREGROUND_RED);
+		printc("SALDO TIDAK MENCUKUPI!\n", FOREGROUND_RED);
+		return 0;
+	}
+	return 1;
+}
+
+/**
+ * @brief Untuk menampilkan menu utama ATM
+ *
+ * @return int 1 jika pilihan benar, 0 jika pilihan salah
+ * @todo
+ * - belum ada error handling ketika user memasukkan karakter,
+ *   sehingga langsung keluar dari console ketika input bukan angka
+ */
+void menu()
+{
+	// Untuk menghindari layar diclear ketika ada pesan error
+	if (pilihan <= 5)
+	{
+		system("cls");
+	}
+
+	printLine("=", SCREEN_WIDTH);
+	centerString("MENU UTAMA", SCREEN_WIDTH);
+	printf("\n");
+	printLine("=", SCREEN_WIDTH);
+
+	printf("1 - TARIK TUNAI\n");
+	printf("2 - CEK SALDO\n");
+	printf("3 - TRANSFER\n");
+	printf("4 - GANTI PIN\n");
+	printf("5 - KELUAR\n");
+
+	printf("\n\nPILIHAN : ");
+	if (scanf("%d", &pilihan) < 1)
+	{
+		exitProgram();
+	}
+
+	switch (pilihan)
+	{
+	case 1:
+		penarikan(&logged_user);
+		break;
+	case 2:
+		cekSaldo(&logged_user);
+		break;
+	case 3:
+		transfer(&logged_user);
+		break;
+	case 4:
+		gantiPin(&logged_user, pin, &percobaan);
+		break;
+	case 5:
+		exitProgram();
+		break;
+	default:
+		printc("\nPILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);
+		Sleep(1000);
+		system("cls");
+		menu();
+	}
+}
+
+int autentikasiNorek(char *norek)
+{
+	if (strlen(norek) > 0 && strlen(norek) == 5)
+	{
+		for (int i = 0; i < TOTAL_DATA_DB; i++)
+		{
+			if (strcmp(norek, data_nasabah[i].norek) == 0)
+			{
+				// untuk mengecek apakah user sudah login atau belum
+				if (!is_login)
+				{
+					is_login = 1;
+					logged_user = data_nasabah[i];
+				}
+				return 1;
+			}
+		}
+		/**
+		 * jika program menjalankan kode di bawah ini,
+		 * tandanya ketika mencocokkan no rekening yg diinput
+		 * dengan yang ada di mini database, itu tidak ada yg
+		 * cocok sama sekali. Artinya No. Rekening tidak terdaftar.
+		 */
+		printc("\nNO. REKENING TIDAK TERDAFTAR!\n", FOREGROUND_RED);
+		Sleep(2000);
+		system("cls");
+		return 0;
+	}
+	else
+	{
+		printc("\nNO. REKENING ANDA TIDAK VALID!\n", FOREGROUND_RED);
+		printc("PASTIKAN NO. REKENING ANDA BENAR DAN TERDIRI DARI 5 DIGIT\n", FOREGROUND_RED);
+		Sleep(2500);
+		system("cls");
+		return 0;
+	}
+}
+
+int autentikasiPIN(char *pin)
+{
+	if (strlen(pin) > 0 && strlen(pin) == 6)
+	{
+		if (strcmp(pin, logged_user.pin) == 0)
+		{
+			return 1;
+		}
+
+		percobaan++;
+		system("cls");
+		showBlockedCardMessage();
+
+		printc("\nPIN ANDA SALAH!\n", FOREGROUND_RED);
+		printc("PASTIKAN PIN ANDA BENAR\n", FOREGROUND_RED);
+		Sleep(2000);
+		system("cls");
+		return 0;
+	}
+	else
+	{
+		percobaan++;
+		showBlockedCardMessage();
+		system("cls");
+		printc("\nPIN ANDA TIDAK VALID!\n", FOREGROUND_RED);
+		printc("PASTIKAN PIN ANDA BENAR DAN TERDIRI DARI 6 DIGIT\n", FOREGROUND_RED);
+		Sleep(2000);
+		system("cls");
+		return 0;
+	}
+}
+
+int cariNasabahBerdasarkanNorek(char *norek)
+{
+	if (autentikasiNorek(norek))
+	{
+		for (int i = 0; i < TOTAL_DATA_DB; i++)
+		{
+			if (strcmp(norek, data_nasabah[i].norek) == 0)
+			{
+				nasabah_tujuan = data_nasabah[i];
+				return 1;
+			}
+		}
+		printc("NO. REKENING TUJUAN TIDAK TERDAFTAR!\n", FOREGROUND_RED);
+		Sleep(1000);
+		return 0;
+	}
 }
 
 int cekSaldo(nasabah *logged_user)
@@ -65,21 +283,9 @@ int cekSaldo(nasabah *logged_user)
 	formatNumber(logged_user->saldo);
 	printf("\n\n");
 	yesNoQuestion("APAKAH ANDA INGIN MELAKUKAN TRANSAKSI LAIN?");
-
-	if (pilihan == 1)
-		return 1;
-	else if (pilihan == 2)
-		return 0;
-	else
-	{
-		system("cls");
-		printc("PILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);
-		Sleep(1000);
-		yesNoQuestion("APAKAH ANDA INGIN MELAKUKAN TRANSAKSI LAIN?");
-	}
 }
 
-int penarikan(nasabah *logged_user)
+void penarikan(nasabah *logged_user)
 {
 	int nominal;
 	system("cls");
@@ -93,41 +299,27 @@ int penarikan(nasabah *logged_user)
 
 	if (scanf("%d", &nominal) < 1)
 	{
-		return 0;
+		exitProgram();
 	}
 
-	transactionQuestion();
-	switch (pilihan)
+	if (transactionQuestion())
 	{
-	case 1:
-		if ((nominal % 50000 == 0))
-		{
-			if (!isTheBalanceEnough(logged_user->saldo, nominal))
-			{
-				yesNoQuestion("TRANSAKSI LAGI?");
-				return pilihan == 1 ? pilihan : 0;
-			}
-
-			logged_user->saldo -= nominal;
-			system("cls");
-			return cekSaldo(logged_user);
-			break;
-		}
-		else
+		if (!(nominal % 50000 == 0))
 		{
 			printc("Nominal Tidak Valid", FOREGROUND_RED);
 			Sleep(1500);
 			system("cls");
 			return penarikan(logged_user);
-			break;
 		}
-		break;
-	case 2:
-		return 0;
-		break;
-	default:
-		return 1;
-		break;
+
+		if (!isTheBalanceEnough(logged_user->saldo, nominal))
+		{
+			yesNoQuestion("TRANSAKSI LAGI?");
+		}
+
+		logged_user->saldo -= nominal;
+		system("cls");
+		cekSaldo(logged_user);
 	}
 }
 /**
@@ -165,7 +357,7 @@ int inputTransferNominal(int *in_nominal)
 	return 1;
 }
 
-int transfer(nasabah *logged_user)
+void transfer(nasabah *logged_user)
 {
 	system("cls");
 
@@ -175,12 +367,18 @@ int transfer(nasabah *logged_user)
 	printLine("=", SCREEN_WIDTH);
 
 	printf("MASUKKAN NO. REKENING TUJUAN: ");
-	if (scanf("%s", norek_tujuan) < 1)
+
+	if (scanf("%s", &norek_tujuan) < 1)
 	{
-		return 0;
+		exitProgram();
 	}
 
-	if (!strcmp(norek_tujuan, logged_user->norek))
+	if (!autentikasiNorek(norek_tujuan))
+	{
+		transfer(logged_user);
+	}
+
+	if (strcmp(norek_tujuan, logged_user->norek) == 0)
 	{
 		printc("NO. REKENING TUJUAN HARUS BERBEDA DENGAN NO. REKENING ANDA!\n", FOREGROUND_RED);
 		Sleep(2500);
@@ -189,8 +387,7 @@ int transfer(nasabah *logged_user)
 
 	if (!cariNasabahBerdasarkanNorek(norek_tujuan))
 	{
-
-		return transfer(logged_user);
+		transfer(logged_user);
 	}
 
 	system("cls");
@@ -199,7 +396,6 @@ int transfer(nasabah *logged_user)
 	if (!isTheBalanceEnough(logged_user->saldo, nominal))
 	{
 		yesNoQuestion("TRANSAKSI LAGI?");
-		return pilihan == 1 ? pilihan : 0;
 	}
 
 	system("cls");
@@ -220,67 +416,14 @@ int transfer(nasabah *logged_user)
 	printf("\nTOTAL\t\t: Rp ");
 	formatNumber(total);
 
-	transactionQuestion();
-
-	system("cls");
-
-	switch (pilihan)
+	if (transactionQuestion())
 	{
-	case 1:
 		logged_user->saldo -= total;
 		nasabah_tujuan.saldo += nominal;
-		printf("TRANSAKSI BERHASIL\n");
 
+		printc("TRANSAKSI BERHASIL\n", FOREGROUND_GREEN);
 		simpanStruk(logged_user, nasabah_tujuan, nominal, total);
-
 		cekSaldo(logged_user);
-		system("cls");
-		return pilihan;
-	case 2:
-		return 0;
-	case 3:
-		return 1;
-	default:
-		printc("PILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);
-		transfer(logged_user);
-		return 0;
-	}
-}
-
-int isTheBalanceEnough(int saldo, int nominal)
-{
-	if (saldo < nominal)
-	{
-		system("cls");
-		printc("TRANSAKSI GAGAL\n", FOREGROUND_RED);
-		printc("SALDO TIDAK MENCUKUPI!\n", FOREGROUND_RED);
-		return 0;
-	}
-	return 1;
-}
-
-int cariNasabahBerdasarkanNorek(char *in_norek)
-{
-	if (strlen(in_norek) > 0 && strlen(in_norek) == 5)
-	{
-		for (int i = 0; i < TOTAL_DATA_DB; i++)
-		{
-			if (strcmp(in_norek, data_nasabah[i].norek) == 0)
-			{
-				nasabah_tujuan = data_nasabah[i];
-				return 1;
-			}
-		}
-		printc("NO. REKENING TUJUAN TIDAK TERDAFTAR!\n", FOREGROUND_RED);
-		Sleep(1000);
-		return 0;
-	}
-	else
-	{
-		printc("NO. REKENING TUJUAN TIDAK VALID!\n", FOREGROUND_RED);
-		printc("PASTIKAN NO. REKENING TUJUAN BENAR DAN TERDIRI DARI 5 DIGIT\n", FOREGROUND_RED);
-		Sleep(1000);
-		return 0;
 	}
 }
 
@@ -371,7 +514,7 @@ void simpanStruk(nasabah *logged_user, nasabah nasabah_tujuan, int nominal, int 
 	fclose(file_struk);
 }
 
-int gantiPin(nasabah *logged_user, char *pin, int *percobaan)
+void gantiPin(nasabah *logged_user, char *pin, int *percobaan)
 {
 	system("cls");
 
@@ -389,64 +532,33 @@ int gantiPin(nasabah *logged_user, char *pin, int *percobaan)
 	//		return 0;
 	//	}
 
-	if (!isPINValid(pin))
+	//
+	if (!autentikasiPIN(pin))
 	{
-		percobaan++;
 		gantiPin(logged_user, pin, percobaan);
 	}
 
-	if (strcmp(pin, logged_user->pin) == 0)
+	printf("\nMASUKKAN PIN BARU: ");
+	maskingInput(pin, "*");
+	// if (scanf("%s", pin) < 1)
+	// {
+	// 	return 0;
+	// }
+
+	if (!autentikasiPIN(pin))
 	{
-		printf("\nMASUKKAN PIN BARU: ");
-		maskingInput(pin, "*");
-		//		if (scanf("%s", pin) < 1)
-		//		{
-		//			return 0;
-		//		}
+		gantiPin(logged_user, pin, percobaan);
+	}
 
-		if (!isPINValid(pin))
-		{
-			percobaan++;
-			gantiPin(logged_user, pin, percobaan);
-		}
-
-		confirmNewPIN(pin);
+	if (confirmNewPIN(pin))
+	{
 		logged_user->pin = pin;
 
-		printc("\n\nPIN BERHASIL DIUBAH!\n\n", FOREGROUND_GREEN);
+		printc("\n\nPIN BERHASIL DIUBAH SEMENTARA!\n\n", FOREGROUND_GREEN);
+		printc("\nPIN AKAN KEMBALI SEPERTI SEMULA JIKA PROGRAM DITUTUP!\n", FOREGROUND_BLUE);
+		printf("PIN BARU: %s\n", pin);
 		yesNoQuestion("APAKAH ANDA INGIN MELAKUKAN TRANSAKSI LAIN?");
-
-		switch (pilihan)
-		{
-		case 1:
-			return 1;
-		case 2:
-			return 0;
-		default:
-			break;
-		}
 	}
-	else
-	{
-		percobaan++;
-		printc("\nPIN ANDA SALAH!\n", FOREGROUND_RED);
-		printc("PASTIKAN PIN ANDA BENAR!\n", FOREGROUND_RED);
-		Sleep(2000);
-		system("cls");
-		gantiPin(logged_user, pin, percobaan);
-	}
-}
-
-int isPINValid(char *pin)
-{
-	if (strlen(pin) > 0 && strlen(pin) == 6)
-		return 1;
-
-	printc("\nPIN ANDA TIDAK VALID!\n", FOREGROUND_RED);
-	printc("PASTIKAN PIN ANDA BENAR DAN TERDIRI DARI 6 DIGIT!\n", FOREGROUND_RED);
-	Sleep(2000);
-	system("cls");
-	return 0;
 }
 
 int confirmNewPIN(char *pin)
@@ -458,7 +570,7 @@ int confirmNewPIN(char *pin)
 	//		return 0;
 	//	}
 
-	if (!isPINValid(konfirmasi_pin))
+	if (!autentikasiPIN(konfirmasi_pin))
 	{
 		return confirmNewPIN(pin);
 	}
@@ -467,6 +579,4 @@ int confirmNewPIN(char *pin)
 	{
 		return 1;
 	}
-
-	return 0;
 }

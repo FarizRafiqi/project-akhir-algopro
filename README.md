@@ -21,7 +21,9 @@ ATM Millenial adalah program simulasi ATM yang kami buat dengan memanfaatkan con
 
 ## Perhatian
 Jika ingin menggunakan projek untuk kebutuhan belajar silakan, tetapi Anda **harus** fork repo ini ke akun github Anda.
+
 Sekian terimakasih 🙏, semoga sukses selalu ya teman-teman.
 
 Made with ❤️
+
 **UPN Veteran Jakarta**

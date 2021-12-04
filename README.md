@@ -19,6 +19,11 @@ ATM Millenial adalah program simulasi ATM yang kami buat dengan memanfaatkan con
 2. Error handling yang cukup baik
 3. Terdapat fitur untuk membuat struk transfer secara otomatis
 
+## Cara Penggunaan
+1. Buka file **db_bank.h** (untuk sementara) untuk melihat daftar rekening yang bisa dipakai
+2. Gunakan nomor rekening dan PIN yang telah disediakan pada saat menggunakan aplikasi
+3. Apabila Anda melakukan transfer, maka file struknya akan tersimpan di folder **struk_nasabah**
+
 ## Perhatian
 Jika ingin menggunakan projek untuk kebutuhan belajar silakan, tetapi Anda **harus** fork repo ini ke akun github Anda.
 

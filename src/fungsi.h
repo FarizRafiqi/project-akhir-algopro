@@ -29,7 +29,7 @@ void simpanStruk(nasabah *logged_user, nasabah nasabah_tujuan, int nominal, int 
 
 void welcome()
 {
-	readFile("util\\welcome.txt");
+	readFile("src\\util\\welcome.txt");
 	printf("TEKAN 'ENTER' PADA KEYBOARD JIKA SELESAI MEMASUKKAN PIN\n");
 }
 

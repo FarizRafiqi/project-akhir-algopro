@@ -15,6 +15,9 @@ int main()
 
     // inisialisasi data nasabah
     dataNasabah(data_nasabah);
+    // logged_user = data_nasabah[0];
+    // is_login = 1;
+    // transfer(&logged_user);
     printf("MASUKKAN NO. REKENING ANDA: ");
     if (scanf("%s", norek) == 1)
     {

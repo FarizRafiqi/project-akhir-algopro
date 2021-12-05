@@ -6,6 +6,7 @@
 #include "util/chalk.h"
 #include "util/utils.h"
 #include "constants.c"
+#include <locale.h>
 
 #define SCREEN_WIDTH 60
 
@@ -18,19 +19,20 @@ char pin[6];
 char norek[5];
 int pilihan = 0;
 int is_login = 0;
+int is_fast_withdrawal = 0;
 
 nasabah logged_user;
 nasabah nasabah_tujuan;
 
 void formatNumber(int n);
 void readFile(char *filename);
-int inputTransferNominal(int *in_nominal);
+void inputTransferNominal(int *in_nominal);
 int transactionQuestion();
 int isPINValid(char *pin);
 int confirmNewPIN(char *pin);
 void simpanStruk(nasabah *logged_user, nasabah nasabah_tujuan, int nominal, int total);
 void menu();
-void penarikan(nasabah *logged_user);
+void penarikan(nasabah *logged_user, int *nominal);
 int cekSaldo(nasabah *logged_user);
 void transfer(nasabah *logged_user);
 void gantiPin(nasabah *logged_user, char *pin, int *percobaan);
@@ -44,6 +46,15 @@ void welcome()
 {
 	readFile("src\\util\\welcome.txt");
 	printf("TEKAN 'ENTER' PADA KEYBOARD JIKA SELESAI MEMASUKKAN PIN\n");
+}
+
+void printHeader(char *title)
+{
+	system("cls");
+	printLine("=", SCREEN_WIDTH);
+	centerString(title, SCREEN_WIDTH);
+	printf("\n");
+	printLine("=", SCREEN_WIDTH);
 }
 
 void exitProgram()
@@ -85,7 +96,7 @@ int transactionQuestion()
 	printf("MASUKKAN PILIHAN ANDA: ");
 	scanf("%d", &pilihan);
 
-	if (pilihan < 1 && pilihan > 3)
+	if (pilihan < 1 || pilihan > 3)
 	{
 		printc("PILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);
 		Sleep(1000);
@@ -138,16 +149,13 @@ int isTheBalanceEnough(int saldo, int nominal)
  */
 void menu()
 {
-	printLine("=", SCREEN_WIDTH);
-	centerString("MENU UTAMA", SCREEN_WIDTH);
-	printf("\n");
-	printLine("=", SCREEN_WIDTH);
+	printHeader("MENU UTAMA");
 
-	printf("1 - TARIK TUNAI\n");
-	printf("2 - CEK SALDO\n");
-	printf("3 - TRANSFER\n");
-	printf("4 - GANTI PIN\n");
-	printf("5 - KELUAR\n");
+	printf("1 - TARIK TUNAI %*s\n", SCREEN_WIDTH - 16, "5.     50.000");
+	printf("2 - CEK SALDO %*s\n", SCREEN_WIDTH - 14, "6.    200.000");
+	printf("3 - TRANSFER %*s\n", SCREEN_WIDTH - 13, "7.    500.000");
+	printf("4 - GANTI PIN %*s\n", SCREEN_WIDTH - 14, "8.  1.000.000");
+	printf("9 - KELUAR\n");
 
 	printf("\n\nPILIHAN : ");
 	if (scanf("%d", &pilihan) < 1)
@@ -158,7 +166,8 @@ void menu()
 	switch (pilihan)
 	{
 	case 1:
-		penarikan(&logged_user);
+		nominal = 0;
+		penarikan(&logged_user, &nominal);
 		break;
 	case 2:
 		cekSaldo(&logged_user);
@@ -170,6 +179,26 @@ void menu()
 		gantiPin(&logged_user, pin, &percobaan);
 		break;
 	case 5:
+		nominal = 50000;
+		is_fast_withdrawal = 1;
+		penarikan(&logged_user, &nominal);
+		break;
+	case 6:
+		nominal = 200000;
+		is_fast_withdrawal = 1;
+		penarikan(&logged_user, &nominal);
+		break;
+	case 7:
+		nominal = 500000;
+		is_fast_withdrawal = 1;
+		penarikan(&logged_user, &nominal);
+		break;
+	case 8:
+		nominal = 1000000;
+		is_fast_withdrawal = 1;
+		penarikan(&logged_user, &nominal);
+		break;
+	case 9:
 		exitProgram();
 		break;
 	default:
@@ -279,59 +308,63 @@ int cekSaldo(nasabah *logged_user)
 	yesNoQuestion("APAKAH ANDA INGIN MELAKUKAN TRANSAKSI LAIN?");
 }
 
-void penarikan(nasabah *logged_user)
+void penarikan(nasabah *logged_user, int *nominal)
 {
-	int nominal;
+	if (!is_fast_withdrawal)
+	{
+		printHeader("PENARIKAN");
+		centerString("MASUKKAN NOMINAL \n", SCREEN_WIDTH);
+		centerString("(DALAM KELIPATAN RP 50000)\n", SCREEN_WIDTH);
+		centerString("MAKSIMAL RP 1.250.000\n\n", SCREEN_WIDTH);
+		centerString("Rp ", SCREEN_WIDTH - 10);
+
+		if (scanf("%d", nominal) < 1)
+		{
+			exitProgram();
+		}
+
+		if (transactionQuestion())
+		{
+			if (!(*nominal % 50000 == 0) || *nominal <= 0)
+			{
+				printc("NOMINAL HARUS KELIPATAN 50.000", FOREGROUND_RED);
+				Sleep(1500);
+				system("cls");
+				penarikan(logged_user, nominal);
+			}
+
+			if (*nominal > 1250000)
+			{
+				printc("MAKSIMAL PENARIKAN TUNAI 1.250.000", FOREGROUND_RED);
+				Sleep(1500);
+				system("cls");
+				penarikan(logged_user, nominal);
+			}
+		}
+	}
+
+	if (!isTheBalanceEnough(logged_user->saldo, *nominal))
+	{
+		yesNoQuestion("TRANSAKSI LAGI?");
+	}
+	logged_user->saldo -= *nominal;
+	printc("PENARIKAN BERHASIL\n", FOREGROUND_GREEN);
+	Sleep(1500);
 	system("cls");
-	printLine("=", SCREEN_WIDTH);
-	centerString("PENARIKAN", SCREEN_WIDTH);
-	printf("\n");
-	printLine("=", SCREEN_WIDTH);
-
-	centerString("MASUKKAN NOMINAL KELIPATAN RP 50000\n\n", SCREEN_WIDTH);
-	centerString("Rp ", SCREEN_WIDTH - 10);
-
-	if (scanf("%d", &nominal) < 1)
-	{
-		exitProgram();
-	}
-
-	if (transactionQuestion())
-	{
-		if (!(nominal % 50000 == 0))
-		{
-			printc("Nominal Tidak Valid", FOREGROUND_RED);
-			Sleep(1500);
-			system("cls");
-			return penarikan(logged_user);
-		}
-
-		if (!isTheBalanceEnough(logged_user->saldo, nominal))
-		{
-			yesNoQuestion("TRANSAKSI LAGI?");
-		}
-
-		logged_user->saldo -= nominal;
-		system("cls");
-		cekSaldo(logged_user);
-	}
+	cekSaldo(logged_user);
 }
 /**
  * @todo Belum dilakukan pengecekan apakah inputnya karakter atau angka
  */
-int inputTransferNominal(int *in_nominal)
+void inputTransferNominal(int *in_nominal)
 {
-	system("cls");
-	printLine("=", SCREEN_WIDTH);
-	centerString("TRANSFER", SCREEN_WIDTH);
-	printf("\n");
-	printLine("=", SCREEN_WIDTH);
+	printHeader("TRANSFER");
 	centerString("MINIMAL TRANSFER ADALAH RP 50.000", SCREEN_WIDTH);
 
 	printf("\n\nMASUKKAN NOMINAL: ");
 	if (scanf("%d", in_nominal) < 1)
 	{
-		return 0;
+		exitProgram();
 	}
 
 	if (*in_nominal < 50000)
@@ -339,29 +372,23 @@ int inputTransferNominal(int *in_nominal)
 		printc("MINIMAL TRANSFER ADALAH Rp 50.000", FOREGROUND_RED);
 		Sleep(1000);
 		system("cls");
-		return inputTransferNominal(in_nominal);
+		inputTransferNominal(in_nominal);
 	}
 	else if (*in_nominal > 100000000)
 	{
 		printc("MAKSIMAL TRANSFER PER HARI ADALAH Rp 100.000.000", FOREGROUND_RED);
 		Sleep(1000);
 		system("cls");
-		return inputTransferNominal(in_nominal);
+		inputTransferNominal(in_nominal);
 	}
-	return 1;
 }
 
 void transfer(nasabah *logged_user)
 {
 	system("cls");
-
-	printLine("=", SCREEN_WIDTH);
-	centerString("TRANSFER", SCREEN_WIDTH);
-	printf("\n");
-	printLine("=", SCREEN_WIDTH);
+	printHeader("TRANSFER");
 
 	printf("MASUKKAN NO. REKENING TUJUAN: ");
-
 	if (scanf("%s", &norek_tujuan) < 1)
 	{
 		exitProgram();
@@ -387,17 +414,8 @@ void transfer(nasabah *logged_user)
 	system("cls");
 	inputTransferNominal(&nominal);
 
-	if (!isTheBalanceEnough(logged_user->saldo, nominal))
-	{
-		yesNoQuestion("TRANSAKSI LAGI?");
-	}
-
 	system("cls");
-
-	printLine("=", SCREEN_WIDTH);
-	centerString("KONFIRMASI TRANSFER ATM", SCREEN_WIDTH);
-	printf("\n");
-	printLine("=", SCREEN_WIDTH);
+	printHeader("KONFIRMASI TRANSFER ATM");
 
 	printf("\nDARI\t\t: %s (%s)\n", logged_user->nama, logged_user->norek);
 	printf("TUJUAN\t\t: %s (%s)\n", nasabah_tujuan.nama, nasabah_tujuan.norek);
@@ -409,6 +427,11 @@ void transfer(nasabah *logged_user)
 	int total = nominal + biaya_admin;
 	printf("\nTOTAL\t\t: Rp ");
 	formatNumber(total);
+
+	if (!isTheBalanceEnough(logged_user->saldo, total))
+	{
+		yesNoQuestion("TRANSAKSI LAGI?");
+	}
 
 	if (transactionQuestion())
 	{
@@ -511,12 +534,7 @@ void simpanStruk(nasabah *logged_user, nasabah nasabah_tujuan, int nominal, int 
 void gantiPin(nasabah *logged_user, char *pin, int *percobaan)
 {
 	system("cls");
-
-	printLine("=", SCREEN_WIDTH);
-	centerString("GANTI PIN", SCREEN_WIDTH);
-	printf("\n");
-	printLine("=", SCREEN_WIDTH);
-
+	printHeader("GANTI PIN");
 	centerString("GANTI PIN SECARA BERKALA DEMI KEAMANAN REKENING ANDA\n\n\n", SCREEN_WIDTH);
 
 	printf("MASUKKAN PIN LAMA: ");

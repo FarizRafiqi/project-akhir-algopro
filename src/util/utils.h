@@ -35,6 +35,23 @@ void formatNumber(int n)
     printf(".%03d", n % 1000);
 }
 
+void formatNumberNew(int *n)
+{
+    if (*n < 0)
+    {
+        printf("-");
+        formatNumber(-*n);
+        return;
+    }
+    if (*n < 1000)
+    {
+        printf("%d", n);
+        return;
+    }
+    formatNumber(*n / 1000);
+    printf(".%03d", *n % 1000);
+}
+
 /**
  * @brief Untuk mencari posisi dari sebuah string
  *
@@ -297,6 +314,39 @@ void maskingInput(char *input, char *mask)
             input[i] = ch;
             i++;
             printf(mask);
+        }
+    }
+}
+
+void onInputFormatNumber(int input)
+{
+    int i = 0;
+    char ch;
+    while (1)
+    {
+        ch = getch();
+        if (ch == ENTER)
+        {
+            input = '\0';
+            break;
+        }
+        else if (ch == BKSPC)
+        {
+            if (i > 0)
+            {
+                i--;
+                printf("\b \b");
+            }
+        }
+        else if (ch == TAB || ch == SPACE)
+        {
+            continue;
+        }
+        else
+        {
+            input = ch;
+            i++;
+            formatNumber(input);
         }
     }
 }

@@ -35,6 +35,7 @@ int main()
 
 void inputPIN()
 {
+    printHeader("ATM MILLENIAL");
     printf("MASUKKAN PIN ATM ANDA: ");
     maskingInput(pin, "*");
     // scanf("%s", &pin);

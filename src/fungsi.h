@@ -16,6 +16,7 @@ int nominal = 0;
 int biaya_admin = 6500;
 int percobaan = 0;
 char pin[6];
+char pin_baru[6];
 char norek[5];
 int pilihan = 0;
 int is_login = 0;
@@ -28,14 +29,13 @@ void formatNumber(int n);
 void readFile(char *filename);
 void inputTransferNominal(int *in_nominal);
 int transactionQuestion();
-int isPINValid(char *pin);
 int confirmNewPIN(char *pin);
 void simpanStruk(nasabah *logged_user, nasabah nasabah_tujuan, int nominal, int total);
 void menu();
 void penarikan(nasabah *logged_user, int *nominal);
 int cekSaldo(nasabah *logged_user);
 void transfer(nasabah *logged_user);
-void gantiPin(nasabah *logged_user, char *pin, int *percobaan);
+void gantiPin();
 
 int isItBlocked()
 {
@@ -70,22 +70,18 @@ void yesNoQuestion(char *text)
 	printf("\n\n1. YA\n2. TIDAK\n");
 
 	printf("MASUKKAN PILIHAN ANDA: ");
-	scanf("%d", &pilihan);
-	if (pilihan < 1 && pilihan > 2)
+	if(scanf("%d", &pilihan) < 1) {
+		exitProgram();
+	}
+
+	if (pilihan < 1 || pilihan > 2)
 	{
 		printc("PILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);
 		Sleep(1000);
 		yesNoQuestion(text);
 	}
 
-	if (pilihan == 1)
-	{
-		menu();
-	}
-	else
-	{
-		exitProgram();
-	}
+	return pilihan == 1 ? menu() : exitProgram();
 }
 
 int transactionQuestion()
@@ -176,7 +172,7 @@ void menu()
 		transfer(&logged_user);
 		break;
 	case 4:
-		gantiPin(&logged_user, pin, &percobaan);
+		gantiPin();
 		break;
 	case 5:
 		nominal = 50000;
@@ -249,24 +245,7 @@ int autentikasiNorek(char *norek)
 
 int autentikasiPIN(char *pin)
 {
-	if (strlen(pin) > 0 && strlen(pin) == 6)
-	{
-		if (strcmp(pin, logged_user.pin) == 0)
-		{
-			return 1;
-		}
-
-		percobaan++;
-		system("cls");
-		showBlockedCardMessage();
-
-		printc("\nPIN ANDA SALAH!\n", FOREGROUND_RED);
-		printc("PASTIKAN PIN ANDA BENAR\n", FOREGROUND_RED);
-		Sleep(2000);
-		system("cls");
-		return 0;
-	}
-	else
+	if (strlen(pin) < 0 || strlen(pin) > 6)
 	{
 		percobaan++;
 		showBlockedCardMessage();
@@ -277,6 +256,50 @@ int autentikasiPIN(char *pin)
 		system("cls");
 		return 0;
 	}
+	/**
+	 * jika PIN yang dimasukkan sama dengan PIN yang tersimpan di database,
+	 * dan pin baru masih kosong itu artinya ada 2 kemungkinan.
+	 * 1. user mencoba untuk login ke dalam ATM
+	 * 2. user sudah login, tetapi dia ingin mengganti PIN
+	 *    jika ingin mengganti PIN, maka user diminta untuk memasukkan PIN lama
+	 *    (dalam kondisi ini user belum memasukkan PIN baru) sebagai suatu cara,
+	 *    agar rekening user aman dari tindakan kejahatan. Jika dua kondisi ini
+	 *    terpenuhi maka kembalikan nilai true. Jika tidak maka akan lanjut
+	 *    ke statement if selanjutnya.
+	 * di statement kedua, dicek apakah variable pin barunya sudah terisi
+	 * (ditandai dengan panjang string lebih dari 0). Jika sudah maka jalankan kode di dalam blok.
+	 * Kemudian jika PIN baru sama dengan PIN lama, artinya tidak ada perubahan PIN, maka tampilkan
+	 * pesan seperti yang tertera di bawah ini dan kembalikan nilai false. Jika berbeda maka kembalikan
+	 * nilai true. Jika tidak ada statement yang terpenuhi itu berarti PIN yang dimasukkan salah
+	 * (tidak sama dengan yang di database), dan kemudian percobaan user memasukkan PIN lama mulai dihitung
+	 **/
+
+	if (strcmp(pin, logged_user.pin) == 0 && strlen(pin_baru) == 0)
+	{
+		return 1;
+	}
+	else if (strlen(pin_baru) > 0)
+	{
+		if (strcmp(pin_baru, logged_user.pin) == 0)
+		{
+			printc("\nPIN BARU HARUS BERBEDA DENGAN PIN LAMA!\n", FOREGROUND_RED);
+			Sleep(2000);
+			system("cls");
+			return 0;
+		}
+
+		return 1;
+	}
+
+	percobaan++;
+	system("cls");
+	showBlockedCardMessage();
+
+	printc("\nPIN ANDA SALAH!\n", FOREGROUND_RED);
+	printc("PASTIKAN PIN ANDA BENAR\n", FOREGROUND_RED);
+	Sleep(2000);
+	system("cls");
+	return 0;
 }
 
 int cariNasabahBerdasarkanNorek(char *norek)
@@ -531,7 +554,7 @@ void simpanStruk(nasabah *logged_user, nasabah nasabah_tujuan, int nominal, int 
 	fclose(file_struk);
 }
 
-void gantiPin(nasabah *logged_user, char *pin, int *percobaan)
+void gantiPin()
 {
 	system("cls");
 	printHeader("GANTI PIN");
@@ -539,36 +562,27 @@ void gantiPin(nasabah *logged_user, char *pin, int *percobaan)
 
 	printf("MASUKKAN PIN LAMA: ");
 	maskingInput(pin, "*");
-	//	if (scanf("%s", pin) < 1)
-	//	{
-	//		return 0;
-	//	}
 
-	//
 	if (!autentikasiPIN(pin))
 	{
-		gantiPin(logged_user, pin, percobaan);
+		gantiPin();
 	}
 
 	printf("\nMASUKKAN PIN BARU: ");
-	maskingInput(pin, "*");
-	// if (scanf("%s", pin) < 1)
-	// {
-	// 	return 0;
-	// }
+	maskingInput(pin_baru, "*");
 
-	if (!autentikasiPIN(pin))
+	if (!autentikasiPIN(pin_baru))
 	{
-		gantiPin(logged_user, pin, percobaan);
+		gantiPin();
 	}
 
 	if (confirmNewPIN(pin))
 	{
-		logged_user->pin = pin;
+		logged_user.pin = pin;
 
-		printc("\n\nPIN BERHASIL DIUBAH SEMENTARA!\n\n", FOREGROUND_GREEN);
+		printc("\n\nPIN BERHASIL DIUBAH SEMENTARA!\n", FOREGROUND_GREEN);
 		printc("\nPIN AKAN KEMBALI SEPERTI SEMULA JIKA PROGRAM DITUTUP!\n", FOREGROUND_BLUE);
-		printf("PIN BARU: %s\n", pin);
+		printf("PIN BARU: %s\n\n", pin_baru);
 		yesNoQuestion("APAKAH ANDA INGIN MELAKUKAN TRANSAKSI LAIN?");
 	}
 }

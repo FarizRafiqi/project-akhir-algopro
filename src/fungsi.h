@@ -8,8 +8,6 @@
 #include "constants.c"
 #include <locale.h>
 
-#define SCREEN_WIDTH 60
-
 char norek_tujuan[5];
 char konfirmasi_pin[6];
 int nominal = 0;
@@ -45,12 +43,12 @@ int isItBlocked()
 void welcome()
 {
 	readFile("src\\util\\welcome.txt");
-	printf("TEKAN 'ENTER' PADA KEYBOARD JIKA SELESAI MEMASUKKAN PIN\n");
+	centerString("TEKAN 'ENTER' PADA KEYBOARD JIKA SELESAI MEMASUKKAN PIN\n", SCREEN_WIDTH);
 }
 
 void printHeader(char *title)
 {
-	system("cls");
+	// system("cls");
 	printLine("=", SCREEN_WIDTH);
 	centerString(title, SCREEN_WIDTH);
 	printf("\n");
@@ -70,17 +68,20 @@ void yesNoQuestion(char *text)
 	printf("\n\n1. YA\n2. TIDAK\n");
 
 	printf("MASUKKAN PILIHAN ANDA: ");
-	if(scanf("%d", &pilihan) < 1) {
+	if (scanf("%d", &pilihan) < 1)
+	{
 		exitProgram();
 	}
 
 	if (pilihan < 1 || pilihan > 2)
 	{
+		system("cls");
 		printc("PILIHAN MENU TIDAK TERSEDIA!\n", FOREGROUND_RED);
-		Sleep(1000);
+		Sleep(1500);
+		system("cls");
 		yesNoQuestion(text);
 	}
-
+	system("cls");
 	return pilihan == 1 ? menu() : exitProgram();
 }
 
@@ -119,6 +120,7 @@ void showBlockedCardMessage()
 		printc("\nKARTU ATM ANDA TERBLOKIR!\n", FOREGROUND_RED);
 		printc("HUBUNGI CALL CENTER BANK MILLENIAL: 08787878!", FOREGROUND_RED);
 		logged_user.status = "terblokir";
+		Sleep(2500);
 		exitProgram();
 	}
 }
@@ -162,7 +164,6 @@ void menu()
 	switch (pilihan)
 	{
 	case 1:
-		nominal = 0;
 		penarikan(&logged_user, &nominal);
 		break;
 	case 2:
@@ -245,7 +246,7 @@ int autentikasiNorek(char *norek)
 
 int autentikasiPIN(char *pin)
 {
-	if (strlen(pin) < 0 || strlen(pin) > 6)
+	if (strlen(pin) < 0 || strlen(pin) != 6)
 	{
 		percobaan++;
 		showBlockedCardMessage();
@@ -285,9 +286,9 @@ int autentikasiPIN(char *pin)
 			printc("\nPIN BARU HARUS BERBEDA DENGAN PIN LAMA!\n", FOREGROUND_RED);
 			Sleep(2000);
 			system("cls");
+			strcpy(pin_baru, "");
 			return 0;
 		}
-
 		return 1;
 	}
 
@@ -335,6 +336,7 @@ void penarikan(nasabah *logged_user, int *nominal)
 {
 	if (!is_fast_withdrawal)
 	{
+		system("cls");
 		printHeader("PENARIKAN");
 		centerString("MASUKKAN NOMINAL \n", SCREEN_WIDTH);
 		centerString("(DALAM KELIPATAN RP 50000)\n", SCREEN_WIDTH);
@@ -463,6 +465,7 @@ void transfer(nasabah *logged_user)
 
 		printc("TRANSAKSI BERHASIL\n", FOREGROUND_GREEN);
 		simpanStruk(logged_user, nasabah_tujuan, nominal, total);
+		Sleep(1500);
 		cekSaldo(logged_user);
 	}
 }
@@ -573,16 +576,18 @@ void gantiPin()
 
 	if (!autentikasiPIN(pin_baru))
 	{
+		strcpy(pin_baru, "");
 		gantiPin();
 	}
 
-	if (confirmNewPIN(pin))
+	if (confirmNewPIN(pin_baru))
 	{
 		logged_user.pin = pin;
 
 		printc("\n\nPIN BERHASIL DIUBAH SEMENTARA!\n", FOREGROUND_GREEN);
 		printc("\nPIN AKAN KEMBALI SEPERTI SEMULA JIKA PROGRAM DITUTUP!\n", FOREGROUND_BLUE);
 		printf("PIN BARU: %s\n\n", pin_baru);
+		strcpy(pin_baru, "");
 		yesNoQuestion("APAKAH ANDA INGIN MELAKUKAN TRANSAKSI LAIN?");
 	}
 }
@@ -591,18 +596,18 @@ int confirmNewPIN(char *pin)
 {
 	printf("\nKONFIRMASI PIN BARU: ");
 	maskingInput(konfirmasi_pin, "*");
-	//	if (scanf("%s", konfirmasi_pin) < 1)
-	//	{
-	//		return 0;
-	//	}
-
 	if (!autentikasiPIN(konfirmasi_pin))
 	{
 		return confirmNewPIN(pin);
 	}
 
-	if (strcmp(pin, konfirmasi_pin) == 1)
+	if (strcmp(pin, konfirmasi_pin) == 0)
 	{
 		return 1;
+	} else {
+		printc("\nKONFIRMASI PIN SALAH!\n", FOREGROUND_RED);
+		Sleep(1500);
+		system("cls");
+		return confirmNewPIN(pin);
 	}
 }

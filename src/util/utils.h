@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <conio.h>
 
-#define SCREEN_WIDTH 60
+#define SCREEN_WIDTH 80
 #define ENTER 13
 #define TAB 9
 #define BKSPC 8

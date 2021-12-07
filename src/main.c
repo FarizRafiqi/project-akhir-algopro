@@ -17,7 +17,7 @@ int main()
     dataNasabah(data_nasabah);
     // logged_user = data_nasabah[0];
     // is_login = 1;
-    // transfer(&logged_user);
+    // cekSaldo(&logged_user);
     printf("MASUKKAN NO. REKENING ANDA: ");
     if (scanf("%s", norek) == 1)
     {
@@ -35,13 +35,14 @@ int main()
 
 void inputPIN()
 {
-    printHeader("ATM MILLENIAL");
     printf("MASUKKAN PIN ATM ANDA: ");
     maskingInput(pin, "*");
     // scanf("%s", &pin);
     if (autentikasiPIN(pin))
     {
+        system("cls");
         menu();
     }
+    printHeader("ATM MILLENIAL");
     inputPIN();
 }
